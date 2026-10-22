@@ -3,6 +3,7 @@ Entry point for the packaged app and for running from source.
 
   python app.py              opens the window
   python app.py SONG...      command line (see --help)
+  python app.py repair FILE  Repair Ready from the command line (de-click, de-clip, de-hum)
   python app.py --selftest   checks a packaged build without opening a window or a model download
 """
 import sys
@@ -40,6 +41,9 @@ def main():
         selftest()
         return 0
     args = [a for a in sys.argv[1:] if not a.startswith("-psn_")]
+    if args and args[0] == "repair":
+        from stem_lift.repair_cli import main as repair_main
+        return repair_main(args[1:])
     if args:
         from stem_lift.cli import main as cli_main
         return cli_main(args)

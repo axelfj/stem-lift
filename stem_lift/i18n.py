@@ -43,6 +43,31 @@ _STRINGS = {
     "stem_guitar": ("Guitarra", "Guitar"),
     "stem_piano": ("Piano", "Piano"),
     "stem_instrumental": ("Instrumental", "Instrumental"),
+    # Repair Ready
+    "tab_separate": ("Separar stems", "Separate stems"),
+    "tab_repair": ("Reparar (Repair Ready)", "Repair (Repair Ready)"),
+    "repair_intro": (
+        "Arregla grabaciones sin IA: quita clicks y pops, reconstruye picos recortados y elimina el\n"
+        "zumbido de la corriente (50/60 Hz). Guarda \"Canción - reparado.wav\" junto al archivo y, si\n"
+        "quieres, \"Canción - quitado.wav\" con solo lo que se eliminó, para comprobarlo de oído.",
+        "Fixes recordings without AI: removes clicks and pops, rebuilds clipped peaks and takes out\n"
+        "mains hum (50/60 Hz). Saves \"Song - repaired.wav\" next to the file and, if you like,\n"
+        "\"Song - removed.wav\" with only what was taken out, so you can check by ear.",
+    ),
+    "declick": ("Quitar clicks y pops", "Remove clicks and pops"),
+    "declick_sens": ("Sensibilidad", "Sensitivity"),
+    "declip": ("Reconstruir picos recortados (de-clip)", "Rebuild clipped peaks (de-clip)"),
+    "dehum": ("Quitar zumbido de la corriente (de-hum)", "Remove mains hum (de-hum)"),
+    "hum_auto": ("Automático", "Auto"),
+    "write_removed": ("Guardar también lo que se quita", "Also save what was removed"),
+    "repair_open": ("Reparar archivo...", "Repair file..."),
+    "repairing": ("Reparando %s (%d de %d)...", "Repairing %s (%d of %d)..."),
+    "repair_done": ("Listo: %d archivo(s) reparados", "Done: %d file(s) repaired"),
+    "report_clicks": ("%d clicks", "%d clicks"),
+    "report_clip": ("%d tramos recortados reconstruidos, ganancia %.1f dB", "%d clipped runs rebuilt, gain %.1f dB"),
+    "report_hum": ("zumbido a %.2f Hz quitado", "hum at %.2f Hz removed"),
+    "repaired_label": ("reparado", "repaired"),
+    "removed_label": ("quitado", "removed"),
 }
 
 

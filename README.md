@@ -30,6 +30,15 @@ stem-lift cancion.wav --mode 2 --out ./stems   # voz e instrumental
 stem-lift carpeta/ --stems vocals,drums        # solo esos stems, para toda la carpeta
 ```
 
+## Repair Ready (reparar grabaciones)
+
+En la pestaña **Reparar** (o con `stem-lift-repair archivo.wav`): quita clicks y pops, reconstruye picos recortados (de-clip) y elimina el zumbido de la corriente a 50/60 Hz con sus armónicos. Sin IA, con pruebas medidas (ver CHANGELOG). Guarda `Canción - reparado.wav` y, si lo marcas, `Canción - quitado.wav` con solo lo que se eliminó.
+
+```
+stem-lift-repair toma.wav                      # clicks + de-clip
+stem-lift-repair toma.wav --dehum auto --removed
+```
+
 ## Desde el código
 
 ```bash
@@ -48,6 +57,7 @@ stem_lift/separate.py   Backends: DemucsSeparator (real) y BandSeparator (prueba
 stem_lift/job.py        Leer canción, separar, escribir stems
 stem_lift/audio.py      Lectura/escritura con libsndfile
 stem_lift/gui.py        Ventana tkinter      stem_lift/cli.py   Línea de comandos
+stem_lift/repair.py     Repair Ready: de-click, de-clip, de-hum   stem_lift/repair_cli.py
 stem_lift/i18n.py       Textos en español e inglés
 tests/                  Pruebas sin modelo
 installer/              Inno Setup (Windows); el .dmg se arma en CI
