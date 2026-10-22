@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stem-lift"
+dynamic = ["version"]
+description = "Stem Lift: free stem separation for producers"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "Axel (ROMMUSER)"}]
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26", "scipy>=1.11", "soundfile>=0.12"]
+
+[project.optional-dependencies]
+demucs = ["demucs>=4.0", "torch>=2.1", "torchaudio>=2.1"]
+
+[project.scripts]
+stem-lift = "stem_lift.cli:main"
+stem-lift-gui = "stem_lift.gui:main"
+
+[project.urls]
+Homepage = "https://github.com/axelfj/stem-lift"
+Issues = "https://github.com/axelfj/stem-lift/issues"
+
+[tool.setuptools]
+packages = ["stem_lift"]
+
+[tool.setuptools.dynamic]
+version = {attr = "stem_lift.__version__"}

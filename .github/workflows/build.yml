@@ -1,0 +1,146 @@
+name: Build installers
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Create a release for this version (must equal stem_lift.__version__), e.g. 1.0.0a1"
+        required: false
+
+permissions:
+  contents: write
+
+env:
+  TORCH_INDEX: https://download.pytorch.org/whl/cpu
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - name: Version matches the release
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.version != ''
+        shell: bash
+        run: |
+          v=$(python -c "import stem_lift; print(stem_lift.__version__)")
+          want="${{ inputs.version }}"; [ -n "$want" ] || want="${GITHUB_REF_NAME#v}"
+          test "$v" = "$want" || { echo "release $want != __version__ $v"; exit 1; }
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pyinstaller
+      - run: pip install -r requirements-demucs.txt --extra-index-url ${{ env.TORCH_INDEX }}
+      - name: Build StemLift.exe
+        run: pyinstaller --noconfirm --windowed --name StemLift --collect-all demucs --collect-all torchaudio --copy-metadata demucs app.py
+      - name: Smoke test the build
+        shell: pwsh
+        run: |
+          $p = Start-Process dist/StemLift/StemLift.exe -ArgumentList "--selftest" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { exit 1 }
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          $v = python -c "import stem_lift; print(stem_lift.__version__)"
+          choco install innosetup -y --no-progress
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$v" installer\windows.iss
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Copy-Item "installer\Output\StemLift-Setup-$v.exe" "StemLift-Setup.exe"
+          "Installer size: $((Get-Item StemLift-Setup.exe).Length / 1MB) MB"
+      - name: Smoke test the installed app
+        shell: pwsh
+        run: |
+          $p = Start-Process "StemLift-Setup.exe" -ArgumentList "/VERYSILENT","/CURRENTUSER","/SUPPRESSMSGBOXES","/NORESTART" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { exit 1 }
+          $exe = "$env:LOCALAPPDATA\Programs\Stem Lift\StemLift.exe"
+          $p = Start-Process $exe -ArgumentList "--selftest" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { exit 1 }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: StemLift-Windows
+          path: StemLift-Setup.exe
+
+  macos:
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pyinstaller
+      - run: pip install -r requirements-demucs.txt
+      - name: Build Stem Lift.app
+        run: |
+          v=$(python -c "import stem_lift; print(stem_lift.__version__)")
+          pyinstaller --noconfirm --windowed --name "Stem Lift" --collect-all demucs --collect-all torchaudio --copy-metadata demucs \
+            --osx-bundle-identifier com.rommuser.stemlift app.py
+          plutil -replace CFBundleShortVersionString -string "$v" "dist/Stem Lift.app/Contents/Info.plist"
+          plutil -replace CFBundleVersion -string "$v" "dist/Stem Lift.app/Contents/Info.plist"
+      - name: Smoke test
+        run: '"dist/Stem Lift.app/Contents/MacOS/Stem Lift" --selftest'
+      - name: Build StemLift.dmg
+        run: |
+          mkdir dmg
+          cp -R "dist/Stem Lift.app" dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname "Stem Lift" -srcfolder dmg -ov -format UDZO StemLift.dmg
+          ls -lh StemLift.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: StemLift-macOS
+          path: StemLift.dmg
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.version != ''
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+      - name: Release notes from CHANGELOG.md
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          python - <<'EOF'
+          import os, re
+          v = os.environ.get("VERSION") or os.environ["GITHUB_REF_NAME"].lstrip("v")
+          text = open("CHANGELOG.md", encoding="utf-8").read()
+          m = re.search(r"^## \[?%s\]?.*?$(.*?)(?=^## |\Z)" % re.escape(v), text, re.M | re.S)
+          notes = (m.group(1).strip() if m else "") + (
+              "\n\n### Descarga / Download\n\n"
+              "- Windows: `StemLift-Setup.exe`\n"
+              "- macOS (Apple silicon): `StemLift.dmg`\n\n"
+              "Los instaladores todavia no estan firmados; el README explica el aviso de la primera vez. / "
+              "The installers are not code-signed yet; see the README for the first-launch warning.\n")
+          open("notes.md", "w", encoding="utf-8").write(notes)
+          echo = open("tag.txt", "w"); echo.write("v" + v); echo.close()
+          EOF
+          echo "tag=$(cat tag.txt)" >> "$GITHUB_OUTPUT"
+        id: notes
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.notes.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          prerelease: ${{ contains(steps.notes.outputs.tag, 'a') || contains(steps.notes.outputs.tag, 'b') || contains(steps.notes.outputs.tag, 'rc') }}
+          body_path: notes.md
+          files: |
+            StemLift-Windows/StemLift-Setup.exe
+            StemLift-macOS/StemLift.dmg
