@@ -1,0 +1,5 @@
+# CPU-only PyTorch keeps the installer small. Install with:
+#   pip install -r requirements.txt -r requirements-demucs.txt --extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.1
+torchaudio>=2.1
+demucs>=4.0
