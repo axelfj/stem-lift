@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased: V2 preparation
+
+- Exigir Demucs por defecto; rechazar colisiones de salida y publicar stems mediante staging sin sobrescritura; cancelar con limpieza de resultados propios.
+- Todavía no constituye una versión V2 publicada ni valida binarios nativos.
+
 ## 1.1.0a1
 
 Repair Ready: reparación básica de grabaciones sin IA, en una pestaña nueva y por línea de comandos (`stem-lift-repair`). / Repair Ready: basic restoration without AI, in a new tab and from the command line.
@@ -19,3 +24,4 @@ Primera versión para probar. / First test build.
 - Ventana simple en español o inglés, barra de progreso y cancelar; también funciona por línea de comandos (`stem-lift canción.mp3 --mode 2`).
 - El modelo (~80 MB) se descarga la primera vez; después funciona sin internet. CPU por defecto; usa CUDA o Apple MPS si están disponibles.
 - Instaladores para Windows (.exe) y macOS (.dmg, Apple silicon).
+

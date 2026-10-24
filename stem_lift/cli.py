@@ -31,7 +31,11 @@ def main(argv=None):
                   file=sys.stderr)
             return 2
 
-    separator = make_separator(args.backend, args.device)
+    try:
+        separator = make_separator(args.backend, args.device)
+    except (RuntimeError, ValueError) as e:
+        print(str(e), file=sys.stderr)
+        return 2
     print("%s %s, backend: %s" % (APP_NAME, __version__, separator.name))
 
     def progress(n, total, path, fraction):
@@ -49,3 +53,4 @@ def main(argv=None):
             for p in outcome:
                 print("  " + p)
     return 1 if failed else 0
+
