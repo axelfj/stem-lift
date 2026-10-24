@@ -32,6 +32,8 @@ def read(path):
         raise AudioError("%s: %s" % (os.path.basename(path), e))
     if data.shape[0] == 0:
         raise AudioError("%s is empty" % os.path.basename(path))
+    if not np.isfinite(data).all():
+        raise AudioError("audio contains non-finite samples (NaN or infinity)")
     return data, int(rate)
 
 
@@ -51,3 +53,4 @@ def stem_path(source, stem_label, out_dir=None):
     base = os.path.splitext(name)[0]
     target = out_dir or os.path.join(folder, base + " - stems")
     return os.path.join(target, "%s - %s.wav" % (base, stem_label))
+

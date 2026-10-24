@@ -167,16 +167,17 @@ class DemucsSeparator(Separator):
 
 
 def make_separator(backend=None, device=None):
-    """'demucs' (default when PyTorch is installed), 'bands', or auto."""
-    backend = backend or os.environ.get("STEM_LIFT_BACKEND")
+    """Demucs is required by default; the frequency-band test backend is opt-in."""
+    backend = backend or os.environ.get("STEM_LIFT_BACKEND") or "demucs"
     if backend == "bands":
         return BandSeparator()
-    if backend in (None, "demucs"):
-        try:
-            import demucs  # noqa: F401
-            import torch  # noqa: F401
-            return DemucsSeparator(device=device)
-        except ImportError:
-            if backend == "demucs":
-                raise
-    return BandSeparator()
+    if backend != "demucs":
+        raise ValueError("unknown separation backend: %s" % backend)
+    try:
+        import demucs  # noqa: F401
+        import torch  # noqa: F401
+    except ImportError as e:
+        raise RuntimeError("Demucs is required for instrument separation. "
+                           "Install stem-lift[demucs] or use the desktop installer. "
+                           "The bands backend is only a frequency-split test tool.") from e
+    return DemucsSeparator(device=device)
